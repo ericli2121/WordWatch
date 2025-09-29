@@ -11,7 +11,12 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": [
+        "lib/wanakana.min.js",
+        "lib/kuroshiro.min.js",
+        "lib/kuroshiro-analyzer-kuromoji.min.js",
+        "content.js"
+      ],
       "css": ["overlay.css"],
       "run_at": "document_end"
     }
@@ -24,5 +29,16 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "lib/wanakana.min.js",
+        "lib/kuroshiro.min.js",
+        "lib/kuroshiro-analyzer-kuromoji.min.js",
+        "lib/dict/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
