@@ -51,6 +51,7 @@
   text-align: center;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   line-height: 1.2;
+  pointer-events: none;
 }
 
 .wordwatch-subtitle-romanji {
@@ -62,6 +63,7 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   line-height: 1.2;
   font-style: italic;
+  pointer-events: none;
 }
 
 .wordwatch-controls {

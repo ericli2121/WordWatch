@@ -158,13 +158,11 @@
   document.addEventListener('mouseup', dragEnd);
 
   function dragStart(e) {
-    if (e.target.classList.contains('wordwatch-content')) {
+    // Allow dragging from anywhere on the overlay except the close button
+    if (!e.target.classList.contains('wordwatch-close')) {
       initialX = e.clientX - xOffset;
       initialY = e.clientY - yOffset;
-
-      if (e.target === dragElement || dragElement.contains(e.target)) {
-        isDragging = true;
-      }
+      isDragging = true;
     }
   }
 
