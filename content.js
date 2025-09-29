@@ -15,7 +15,7 @@
   overlay.id = 'wordwatch-overlay';
   overlay.innerHTML = `
     <div class="wordwatch-content">
-      <div class="wordwatch-title">WordWatch</div>
+      <div class="wordwatch-subtitle" id="wordwatch-subtitle">No subtitles detected</div>
       <div class="wordwatch-controls">
         <button class="wordwatch-close">×</button>
       </div>
@@ -27,6 +27,9 @@
 
   // Initialize overlay functionality
   initWordWatchOverlay();
+
+  // Initialize subtitle detection
+  initSubtitleDetection();
 
   // Show overlay by default
   overlay.style.display = 'flex';
@@ -111,4 +114,136 @@ function initWordWatchOverlay() {
     
     return true; // Keep the message channel open for async response
   });
+}
+
+function initSubtitleDetection() {
+  const subtitleElement = document.getElementById('wordwatch-subtitle');
+  
+  // Subtitle selectors for different platforms
+  const subtitleSelectors = {
+    youtube: [
+      '.ytp-caption-segment', // YouTube captions
+      '.caption-visual-line', // YouTube captions (alternative)
+      '.ytp-caption-window-container .ytp-caption-segment'
+    ],
+    netflix: [
+      '.player-timedtext', // Netflix subtitles
+      '.player-timedtext-text-container', // Netflix subtitles container
+      '.player-timedtext-text-container .player-timedtext-text'
+    ],
+    crunchyroll: [
+      '.erc-karaoke-caption', // Crunchyroll subtitles
+      '.erc-captions-text', // Crunchyroll captions
+      '.vjs-text-track-display .vjs-text-track-cue'
+    ],
+    general: [
+      '[class*="subtitle"]',
+      '[class*="caption"]',
+      '[class*="timedtext"]',
+      'video::cue',
+      '.vjs-text-track-display'
+    ]
+  };
+
+  function detectPlatform() {
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+      return 'youtube';
+    } else if (hostname.includes('netflix.com')) {
+      return 'netflix';
+    } else if (hostname.includes('crunchyroll.com')) {
+      return 'crunchyroll';
+    }
+    return 'general';
+  }
+
+  function findSubtitleElement() {
+    const platform = detectPlatform();
+    const selectors = subtitleSelectors[platform] || subtitleSelectors.general;
+    
+    console.log('WordWatch: Detecting subtitles on', platform);
+    
+    for (const selector of selectors) {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length > 0) {
+        console.log('WordWatch: Found subtitle elements with selector:', selector);
+        return elements;
+      }
+    }
+    
+    return null;
+  }
+
+  function extractSubtitleText() {
+    const subtitleElements = findSubtitleElement();
+    if (!subtitleElements) {
+      return null;
+    }
+
+    let subtitleText = '';
+    subtitleElements.forEach(element => {
+      const text = element.textContent || element.innerText;
+      if (text && text.trim()) {
+        subtitleText += text.trim() + ' ';
+      }
+    });
+
+    return subtitleText.trim() || null;
+  }
+
+  function updateSubtitleDisplay() {
+    const subtitleText = extractSubtitleText();
+    if (subtitleText) {
+      subtitleElement.textContent = subtitleText;
+      subtitleElement.style.display = 'block';
+    } else {
+      subtitleElement.textContent = 'No subtitles detected';
+      subtitleElement.style.display = 'block';
+    }
+  }
+
+  // Initial check
+  updateSubtitleDisplay();
+
+  // Monitor for subtitle changes using MutationObserver
+  const observer = new MutationObserver(function(mutations) {
+    let shouldUpdate = false;
+    
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'childList' || mutation.type === 'characterData') {
+        const target = mutation.target;
+        
+        // Check if the mutation is related to subtitle elements
+        const platform = detectPlatform();
+        const selectors = subtitleSelectors[platform] || subtitleSelectors.general;
+        
+        for (const selector of selectors) {
+          if (target.matches && target.matches(selector)) {
+            shouldUpdate = true;
+            break;
+          }
+          if (target.closest && target.closest(selector)) {
+            shouldUpdate = true;
+            break;
+          }
+        }
+      }
+    });
+    
+    if (shouldUpdate) {
+      updateSubtitleDisplay();
+    }
+  });
+
+  // Start observing
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true
+  });
+
+  // Also check periodically for subtitle changes (fallback)
+  setInterval(updateSubtitleDisplay, 1000);
+
+  console.log('WordWatch: Subtitle detection initialized');
 }
