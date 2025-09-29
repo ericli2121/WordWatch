@@ -5,11 +5,16 @@ document.addEventListener('DOMContentLoaded', function() {
   const preview = document.getElementById('preview');
   const showOverlayBtn = document.getElementById('showOverlay');
   const hideOverlayBtn = document.getElementById('hideOverlay');
+  const romanjiToggle = document.getElementById('romanjiToggle');
 
-  // Load saved opacity value
-  chrome.storage.sync.get(['opacity'], function(result) {
+  // Load saved settings
+  chrome.storage.sync.get(['opacity', 'romanjiEnabled'], function(result) {
     const opacity = result.opacity || 0.7;
+    const romanjiEnabled = result.romanjiEnabled || false;
+    
     opacitySlider.value = opacity;
+    romanjiToggle.checked = romanjiEnabled;
+    
     updateOpacityDisplay(opacity);
     updatePreview(opacity);
   });
@@ -28,6 +33,26 @@ document.addEventListener('DOMContentLoaded', function() {
       chrome.tabs.sendMessage(tabs[0].id, {
         action: 'updateOpacity',
         opacity: opacity
+      }, function(response) {
+        if (chrome.runtime.lastError) {
+          console.log('Error sending message:', chrome.runtime.lastError);
+        }
+      });
+    });
+  });
+
+  // Handle romanji toggle change
+  romanjiToggle.addEventListener('change', function() {
+    const romanjiEnabled = this.checked;
+    
+    // Save romanji setting to storage
+    chrome.storage.sync.set({ romanjiEnabled: romanjiEnabled });
+    
+    // Send message to content script to update romanji setting
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: 'updateRomanjiSetting',
+        romanjiEnabled: romanjiEnabled
       }, function(response) {
         if (chrome.runtime.lastError) {
           console.log('Error sending message:', chrome.runtime.lastError);

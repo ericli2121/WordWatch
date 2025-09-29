@@ -2,6 +2,77 @@
 (function() {
   'use strict';
 
+  // Load wanakana library for proper Japanese text conversion
+  function loadWanakana() {
+    return new Promise((resolve, reject) => {
+      if (window.wanakana) {
+        resolve(window.wanakana);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/wanakana@5.0.0/dist/wanakana.min.js';
+      script.onload = () => {
+        if (window.wanakana) {
+          resolve(window.wanakana);
+        } else {
+          reject(new Error('Wanakana library failed to load'));
+        }
+      };
+      script.onerror = () => reject(new Error('Failed to load wanakana library'));
+      document.head.appendChild(script);
+    });
+  }
+
+  // Enhanced romanji conversion using wanakana library
+  async function toRomanji(text) {
+    try {
+      const wanakana = await loadWanakana();
+      
+      // Convert directly to romaji - wanakana handles mixed text automatically
+      const romajiText = wanakana.toRomaji(text);
+      
+      return romajiText;
+    } catch (error) {
+      console.log('WordWatch: Failed to load wanakana, using fallback conversion');
+      
+      // Fallback to basic conversion if library fails to load
+      return basicToRomanji(text);
+    }
+  }
+
+  // Fallback basic conversion (simplified version of the original)
+  function basicToRomanji(text) {
+    const basicMap = {
+      'あ': 'a', 'い': 'i', 'う': 'u', 'え': 'e', 'お': 'o',
+      'か': 'ka', 'き': 'ki', 'く': 'ku', 'け': 'ke', 'こ': 'ko',
+      'さ': 'sa', 'し': 'shi', 'す': 'su', 'せ': 'se', 'そ': 'so',
+      'た': 'ta', 'ち': 'chi', 'つ': 'tsu', 'て': 'te', 'と': 'to',
+      'な': 'na', 'に': 'ni', 'ぬ': 'nu', 'ね': 'ne', 'の': 'no',
+      'は': 'ha', 'ひ': 'hi', 'ふ': 'fu', 'へ': 'he', 'ほ': 'ho',
+      'ま': 'ma', 'み': 'mi', 'む': 'mu', 'め': 'me', 'も': 'mo',
+      'や': 'ya', 'ゆ': 'yu', 'よ': 'yo',
+      'ら': 'ra', 'り': 'ri', 'る': 'ru', 'れ': 're', 'ろ': 'ro',
+      'わ': 'wa', 'を': 'wo', 'ん': 'n',
+      'ア': 'a', 'イ': 'i', 'ウ': 'u', 'エ': 'e', 'オ': 'o',
+      'カ': 'ka', 'キ': 'ki', 'ク': 'ku', 'ケ': 'ke', 'コ': 'ko',
+      'サ': 'sa', 'シ': 'shi', 'ス': 'su', 'セ': 'se', 'ソ': 'so',
+      'タ': 'ta', 'チ': 'chi', 'ツ': 'tsu', 'テ': 'te', 'ト': 'to',
+      'ナ': 'na', 'ニ': 'ni', 'ヌ': 'nu', 'ネ': 'ne', 'ノ': 'no',
+      'ハ': 'ha', 'ヒ': 'hi', 'フ': 'fu', 'ヘ': 'he', 'ホ': 'ho',
+      'マ': 'ma', 'ミ': 'mi', 'ム': 'mu', 'メ': 'me', 'モ': 'mo',
+      'ヤ': 'ya', 'ユ': 'yu', 'ヨ': 'yo',
+      'ラ': 'ra', 'リ': 'ri', 'ル': 'ru', 'レ': 're', 'ロ': 'ro',
+      'ワ': 'wa', 'ヲ': 'wo', 'ン': 'n'
+    };
+
+    let result = text;
+    for (const [japanese, romanji] of Object.entries(basicMap)) {
+      result = result.replace(new RegExp(japanese, 'g'), romanji);
+    }
+    return result;
+  }
+
   console.log('WordWatch content script loaded on:', window.location.href);
 
   // Check if overlay already exists
@@ -28,12 +99,56 @@
   // Initialize overlay functionality
   initWordWatchOverlay();
 
-  // Initialize subtitle detection
-  initSubtitleDetection();
+  // Initialize subtitle detection only on video platforms
+  const hostname = window.location.hostname.toLowerCase();
+  const isVideoPlatform = hostname.includes('youtube.com') || 
+                         hostname.includes('youtu.be') || 
+                         hostname.includes('netflix.com') || 
+                         hostname.includes('crunchyroll.com');
+  
+  if (isVideoPlatform) {
+    // Check if there's actually a video element on the page
+    const videoElements = document.querySelectorAll('video');
+    if (videoElements.length > 0) {
+      initSubtitleDetection();
+      // Show overlay only when there's a video
+      overlay.style.display = 'flex';
+      console.log('WordWatch overlay created and shown on video platform');
+    } else {
+      // Hide overlay if no video detected
+      overlay.style.display = 'none';
+      console.log('WordWatch: Video platform but no video detected, hiding overlay');
+    }
+  } else {
+    // Hide overlay on non-video platforms
+    overlay.style.display = 'none';
+    console.log('WordWatch: Not a video platform, hiding overlay');
+  }
 
-  // Show overlay by default
-  overlay.style.display = 'flex';
-  console.log('WordWatch overlay created and shown');
+  // Monitor for video elements appearing on the page (for dynamic content)
+  const videoObserver = new MutationObserver(function(mutations) {
+    const videoElements = document.querySelectorAll('video');
+    const hasVideo = videoElements.length > 0;
+    
+    if (isVideoPlatform) {
+      if (hasVideo && overlay.style.display === 'none') {
+        // Video appeared, show overlay and initialize subtitle detection
+        overlay.style.display = 'flex';
+        initSubtitleDetection();
+        console.log('WordWatch: Video detected, showing overlay');
+      } else if (!hasVideo && overlay.style.display === 'flex') {
+        // Video disappeared, hide overlay
+        overlay.style.display = 'none';
+        console.log('WordWatch: Video disappeared, hiding overlay');
+      }
+    }
+  });
+
+  // Start observing for video elements
+  videoObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 })();
 
 function initWordWatchOverlay() {
@@ -105,11 +220,30 @@ function initWordWatchOverlay() {
       overlay.style.backgroundColor = `rgba(0, 0, 0, ${request.opacity})`;
       sendResponse({success: true, message: 'Opacity updated'});
     } else if (request.action === 'showOverlay') {
-      overlay.style.display = 'flex';
-      sendResponse({success: true, message: 'Overlay shown'});
+      // Only show overlay if on a video platform with video
+      const hostname = window.location.hostname.toLowerCase();
+      const isVideoPlatform = hostname.includes('youtube.com') || 
+                             hostname.includes('youtu.be') || 
+                             hostname.includes('netflix.com') || 
+                             hostname.includes('crunchyroll.com');
+      const hasVideo = document.querySelectorAll('video').length > 0;
+      
+      if (isVideoPlatform && hasVideo) {
+        overlay.style.display = 'flex';
+        sendResponse({success: true, message: 'Overlay shown'});
+      } else {
+        sendResponse({success: false, message: 'No video detected on this page'});
+      }
     } else if (request.action === 'hideOverlay') {
       overlay.style.display = 'none';
       sendResponse({success: true, message: 'Overlay hidden'});
+    } else if (request.action === 'updateRomanjiSetting') {
+      // Update romanji setting and refresh subtitle display
+      window.wordwatchRomanjiEnabled = request.romanjiEnabled;
+      if (window.wordwatchSubtitleUpdate) {
+        window.wordwatchSubtitleUpdate();
+      }
+      sendResponse({success: true, message: 'Romanji setting updated'});
     }
     
     return true; // Keep the message channel open for async response
@@ -118,6 +252,16 @@ function initWordWatchOverlay() {
 
 function initSubtitleDetection() {
   const subtitleElement = document.getElementById('wordwatch-subtitle');
+  
+  // Check if there's actually a video element on the page
+  const videoElements = document.querySelectorAll('video');
+  if (videoElements.length === 0) {
+    console.log('WordWatch: No video elements found, skipping subtitle detection');
+    subtitleElement.textContent = 'No video detected';
+    return;
+  }
+  
+  console.log('WordWatch: Video elements found, initializing subtitle detection');
   
   // Subtitle selectors for different platforms
   const subtitleSelectors = {
@@ -191,10 +335,27 @@ function initSubtitleDetection() {
     return subtitleText.trim() || null;
   }
 
-  function updateSubtitleDisplay() {
+  async function updateSubtitleDisplay() {
     const subtitleText = extractSubtitleText();
     if (subtitleText) {
-      subtitleElement.textContent = subtitleText;
+      let displayText = subtitleText;
+      
+      // Convert to romanji if enabled and text contains Japanese characters
+      if (window.wordwatchRomanjiEnabled) {
+        try {
+          displayText = await toRomanji(subtitleText);
+          
+          // Log the conversion for debugging
+          if (subtitleText !== displayText) {
+            console.log('WordWatch: Converted to romanji:', subtitleText, '->', displayText);
+          }
+        } catch (error) {
+          console.log('WordWatch: Romanji conversion failed:', error);
+          displayText = subtitleText; // Fallback to original text
+        }
+      }
+      
+      subtitleElement.textContent = displayText;
       subtitleElement.style.display = 'block';
     } else {
       subtitleElement.textContent = 'No subtitles detected';
@@ -202,10 +363,13 @@ function initSubtitleDetection() {
     }
   }
 
+  // Make the function globally accessible
+  window.wordwatchSubtitleUpdate = updateSubtitleDisplay;
+
   // Initial check
   updateSubtitleDisplay();
 
-  // Monitor for subtitle changes using MutationObserver
+  // Monitor for subtitle changes using MutationObserver (optimized)
   const observer = new MutationObserver(function(mutations) {
     let shouldUpdate = false;
     
@@ -213,19 +377,15 @@ function initSubtitleDetection() {
       if (mutation.type === 'childList' || mutation.type === 'characterData') {
         const target = mutation.target;
         
-        // Check if the mutation is related to subtitle elements
-        const platform = detectPlatform();
-        const selectors = subtitleSelectors[platform] || subtitleSelectors.general;
-        
-        for (const selector of selectors) {
-          if (target.matches && target.matches(selector)) {
-            shouldUpdate = true;
-            break;
-          }
-          if (target.closest && target.closest(selector)) {
-            shouldUpdate = true;
-            break;
-          }
+        // Only check mutations that might be related to subtitles
+        if (target.classList && (
+          target.classList.contains('ytp-caption-segment') ||
+          target.classList.contains('player-timedtext') ||
+          target.classList.contains('erc-karaoke-caption') ||
+          target.classList.contains('caption') ||
+          target.classList.contains('subtitle')
+        )) {
+          shouldUpdate = true;
         }
       }
     });
@@ -235,15 +395,15 @@ function initSubtitleDetection() {
     }
   });
 
-  // Start observing
+  // Start observing with more targeted approach
   observer.observe(document.body, {
     childList: true,
     subtree: true,
     characterData: true
   });
 
-  // Also check periodically for subtitle changes (fallback)
-  setInterval(updateSubtitleDisplay, 1000);
+  // Check periodically for subtitle changes (fallback) - reduced frequency
+  setInterval(() => updateSubtitleDisplay(), 2000);
 
   console.log('WordWatch: Subtitle detection initialized');
 }
