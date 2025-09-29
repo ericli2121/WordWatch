@@ -1,0 +1,72 @@
+// Popup script for WordWatch extension
+document.addEventListener('DOMContentLoaded', function() {
+  const opacitySlider = document.getElementById('opacitySlider');
+  const opacityValue = document.getElementById('opacityValue');
+  const preview = document.getElementById('preview');
+  const showOverlayBtn = document.getElementById('showOverlay');
+  const hideOverlayBtn = document.getElementById('hideOverlay');
+
+  // Load saved opacity value
+  chrome.storage.sync.get(['opacity'], function(result) {
+    const opacity = result.opacity || 0.7;
+    opacitySlider.value = opacity;
+    updateOpacityDisplay(opacity);
+    updatePreview(opacity);
+  });
+
+  // Handle opacity slider change
+  opacitySlider.addEventListener('input', function() {
+    const opacity = parseFloat(this.value);
+    updateOpacityDisplay(opacity);
+    updatePreview(opacity);
+    
+    // Save opacity to storage
+    chrome.storage.sync.set({ opacity: opacity });
+    
+    // Send message to content script to update overlay
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: 'updateOpacity',
+        opacity: opacity
+      }, function(response) {
+        if (chrome.runtime.lastError) {
+          console.log('Error sending message:', chrome.runtime.lastError);
+        }
+      });
+    });
+  });
+
+  // Show overlay button
+  showOverlayBtn.addEventListener('click', function() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: 'showOverlay'
+      }, function(response) {
+        if (chrome.runtime.lastError) {
+          console.log('Error sending message:', chrome.runtime.lastError);
+        }
+      });
+    });
+  });
+
+  // Hide overlay button
+  hideOverlayBtn.addEventListener('click', function() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: 'hideOverlay'
+      }, function(response) {
+        if (chrome.runtime.lastError) {
+          console.log('Error sending message:', chrome.runtime.lastError);
+        }
+      });
+    });
+  });
+
+  function updateOpacityDisplay(opacity) {
+    opacityValue.textContent = Math.round(opacity * 100) + '%';
+  }
+
+  function updatePreview(opacity) {
+    preview.style.backgroundColor = `rgba(0, 0, 0, ${opacity})`;
+  }
+});

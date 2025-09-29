@@ -1,0 +1,88 @@
+#wordwatch-overlay {
+  position: fixed;
+  top: 50px;
+  left: 50px;
+  width: 300px;
+  height: 150px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 2px solid #333;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  cursor: move;
+  transition: all 0.2s ease;
+}
+
+#wordwatch-overlay:hover {
+  border-color: #555;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+}
+
+.wordwatch-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  cursor: move;
+}
+
+.wordwatch-title {
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.wordwatch-controls {
+  display: flex;
+  gap: 10px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.wordwatch-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.wordwatch-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.wordwatch-close {
+  padding: 5px 8px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Ensure overlay appears above all other content */
+#wordwatch-overlay * {
+  pointer-events: auto;
+}
+
+/* Prevent text selection on the overlay */
+#wordwatch-overlay,
+.wordwatch-content {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
