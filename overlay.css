@@ -86,8 +86,24 @@
 
 .token-space {
   display: inline-block;
-  width: 0.3em;
+  width: 0.1em;
   margin: 0 0.1em;
+}
+
+/* Part of speech highlighting */
+.pos-noun {
+  font-weight: bold;
+  color: #ff4444; /* Red for nouns */
+}
+
+.pos-verb {
+  font-weight: bold;
+  color: #4444ff; /* Blue for verbs */
+}
+
+.pos-adjective {
+  font-weight: bold;
+  color: #44ff44; /* Green for adjectives */
 }
 
 .wordwatch-controls {

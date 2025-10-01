@@ -26,6 +26,40 @@
     }
   }
 
+  function mergeVerbTokens(tokens) {
+    const merged = [];
+    let i = 0;
+  
+    while (i < tokens.length) {
+      const current = tokens[i];
+  
+      // Start merging if it's a verb
+      if (current.pos === "動詞") {
+        let mergedToken = { ...current };
+        let surface = current.surface_form;
+  
+        // Merge auxiliary verbs and auxiliary particles
+        while (
+          i + 1 < tokens.length &&
+          (tokens[i + 1].pos === "助動詞" ||
+           (tokens[i + 1].pos === "助詞" && tokens[i + 1].pos_detail_1 === "接続助詞"))
+        ) {
+          i++;
+          surface += tokens[i].surface_form;
+        }
+        
+        mergedToken.surface_form = surface;
+        merged.push(mergedToken);
+      } else {
+        merged.push(current);
+      }
+      
+      i++;
+    }
+  
+    return merged;
+  }
+  
   // Simple romanji conversion using Kuroshiro directly
   async function easyConvertToRomaji(japaneseText) {
     try {
@@ -51,7 +85,7 @@
       const { kuroshiro, analyzer } = await initKuroshiro();
 
       // Tokenize the Japanese sentence
-      const tokens = await analyzer.parse(japaneseText);
+      const tokens = mergeVerbTokens(await analyzer.parse(japaneseText));
       let result = '';
       console.log("tokens", tokens);
       // Process each token
@@ -65,8 +99,22 @@
           romajiSystem: "hepburn"
         });
         
-        // Display token with romanji below it
-        result += `<span class="japanese-char">${token.surface_form}<br><span class="romaji-char">${tokenRomaji}</span></span>`;
+        // Get part of speech and apply highlighting
+        const posString = token.pos;
+        
+        let highlightClass = '';
+        
+        // Determine highlight class based on part of speech
+        if (posString.includes('名詞') || posString.includes('noun')) {
+          highlightClass = 'pos-noun'; // Red for nouns
+        } else if (posString.includes('動詞') || posString.includes('verb')) {
+          highlightClass = 'pos-verb'; // Blue for verbs
+        } else if (posString.includes('形容詞') || posString.includes('adjective') || posString.includes('形容動詞')) {
+          highlightClass = 'pos-adjective'; // Green for adjectives
+        }
+        
+        // Display token with romanji below it and part-of-speech highlighting
+        result += `<span class="japanese-char ${highlightClass}">${token.surface_form}<br><span class="romaji-char">${tokenRomaji}</span></span>`;
         
         // Add smaller space between tokens (except for the last one)
         if (i < tokens.length - 1) {
@@ -372,7 +420,7 @@
       if (window.wordwatchRomanjiEnabled) {
         try {
           console.log('WordWatch: Converting to romanji:', subtitleText);
-          const romanjiText = await easyConvertToRomaji(subtitleText);
+          const romanjiText = await convertToRomaji(subtitleText);
           console.log('WordWatch: Romanji result:', romanjiText);
           console.log('WordWatch: Setting innerHTML to:', romanjiText);
           
