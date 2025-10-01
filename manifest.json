@@ -15,6 +15,7 @@
         "lib/wanakana.min.js",
         "lib/kuroshiro.min.js",
         "lib/kuroshiro-analyzer-kuromoji.min.js",
+        "data/jlpt-word-database.js",
         "content.js"
       ],
       "css": ["overlay.css"],
@@ -36,6 +37,7 @@
         "lib/wanakana.min.js",
         "lib/kuroshiro.min.js",
         "lib/kuroshiro-analyzer-kuromoji.min.js",
+        "data/jlpt-word-database.js",
         "lib/dict/*"
       ],
       "matches": ["<all_urls>"]

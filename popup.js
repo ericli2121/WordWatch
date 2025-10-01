@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const romanjiEnabled = result.romanjiEnabled || false;
     const highlightMode = result.highlightMode || 'pos';
     const posTypes = result.posTypes || ['noun', 'verb', 'adjective'];
-    const jlptLevels = result.jlptLevels || ['n1', 'n2', 'n3', 'n4', 'n5'];
+    const jlptLevels = result.jlptLevels || ['N1', 'N2', 'N3', 'N4', 'N5'];
     console.log('Processed settings:', { opacity, romanjiEnabled, highlightMode, posTypes, jlptLevels });
     
     opacitySlider.value = opacity;
