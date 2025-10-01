@@ -46,7 +46,23 @@
       analyzerInstance = new KuromojiAnalyzer({
         dictPath: chrome.runtime.getURL('lib/dict/')  // Must end with /
       });
+      
+      // Suppress font loading errors by overriding console.error temporarily
+      const originalConsoleError = console.error;
+      console.error = function(...args) {
+        const message = args.join(' ');
+        if (message.includes('font') && message.includes('Content Security Policy')) {
+          // Suppress font CSP errors
+          return;
+        }
+        originalConsoleError.apply(console, args);
+      };
+      
       await kuroshiroInstance.init(analyzerInstance);
+      
+      // Restore original console.error
+      console.error = originalConsoleError;
+      
       console.log('Kuroshiro initialized successfully');
       return { kuroshiro: kuroshiroInstance, analyzer: analyzerInstance };
     } catch (error) {
