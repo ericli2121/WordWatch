@@ -14,42 +14,51 @@ function extractBeforeComma(sentence) {
 }
 
 
-// Create level-specific sets
-/* const jlptSets = {
-  N5: new Set(),
-  N4: new Set(),
-  N3: new Set(),
-  N2: new Set(),
-  N1: new Set()
-};
-*/
-const jlptSets = new Set();
+// Create dictionary structure: expression -> wordEntry
+const jlptWordDatabase = {};
+
 vocabArray.forEach(item => {
   const tags = item.tags;
+  const expression = item.expression;
   
-  // Create object with all fields except tags
+  // Create word entry with all fields
   const wordEntry = {
     expression: item.expression,
     reading: item.reading,
-    meaning: extractBeforeComma(item.meaning)
+    meaning: extractBeforeComma(item.meaning),
+    level: null
   };
   
-  if (tags.includes('JLPT_N5') || tags.includes('JLPT_5')) jlptSets.add({...wordEntry, level:"N5"});
-  if (tags.includes('JLPT_N4') || tags.includes('JLPT_4')) jlptSets.add({...wordEntry, level:"N4"});
-  if (tags.includes('JLPT_N3') || tags.includes('JLPT_3')) jlptSets.add({...wordEntry, level:"N3"});
-  if (tags.includes('JLPT_N2') || tags.includes('JLPT_2')) jlptSets.add({...wordEntry, level:"N2"});
-  if (tags.includes('JLPT_N1') || tags.includes('JLPT_1')) jlptSets.add({...wordEntry, level:"N1"});
+  // Determine JLPT level and add to dictionary
+  if (tags.includes('JLPT_N5') || tags.includes('JLPT_5')) {
+    wordEntry.level = 'n5';
+    jlptWordDatabase[expression] = wordEntry;
+  } else if (tags.includes('JLPT_N4') || tags.includes('JLPT_4')) {
+    wordEntry.level = 'n4';
+    jlptWordDatabase[expression] = wordEntry;
+  } else if (tags.includes('JLPT_N3') || tags.includes('JLPT_3')) {
+    wordEntry.level = 'n3';
+    jlptWordDatabase[expression] = wordEntry;
+  } else if (tags.includes('JLPT_N2') || tags.includes('JLPT_2')) {
+    wordEntry.level = 'n2';
+    jlptWordDatabase[expression] = wordEntry;
+  } else if (tags.includes('JLPT_N1') || tags.includes('JLPT_1')) {
+    wordEntry.level = 'n1';
+    jlptWordDatabase[expression] = wordEntry;
+  }
 });
 
 console.log('Processing complete. Statistics:');
-console.log(`words: ${jlptSets.size}`);
+console.log(`Total words: ${Object.keys(jlptWordDatabase).length}`);
 
-
-
-// Convert Set to Array for JSON serialization
-const jlptArray = Array.from(jlptSets);
+// Count by level
+const levelCounts = { n5: 0, n4: 0, n3: 0, n2: 0, n1: 0 };
+Object.values(jlptWordDatabase).forEach(wordEntry => {
+  levelCounts[wordEntry.level]++;
+});
+console.log('Level distribution:', levelCounts);
 
 // Save to JSON file
-fs.writeFileSync('jlpt-sets.json', JSON.stringify(jlptArray, null, 2));
+fs.writeFileSync('jlpt-word-database.json', JSON.stringify(jlptWordDatabase, null, 2));
 
-console.log('Saved to jlpt-sets.json');
+console.log('Saved to jlpt-word-database.json');
