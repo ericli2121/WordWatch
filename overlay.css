@@ -66,6 +66,30 @@
   pointer-events: none;
 }
 
+/* Character-by-character learning display */
+.japanese-char {
+  display: inline-block;
+  text-align: center;
+  margin: 0 2px;
+  vertical-align: top;
+}
+
+.romaji-char {
+  color: #ffeb3b;
+  font-size: 14px;
+  font-weight: 500;
+  font-style: italic;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  display: block;
+  margin-top: 2px;
+}
+
+.token-space {
+  display: inline-block;
+  width: 0.3em;
+  margin: 0 0.1em;
+}
+
 .wordwatch-controls {
   display: flex;
   gap: 10px;

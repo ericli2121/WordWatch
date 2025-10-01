@@ -7,35 +7,74 @@
 
   // Initialize kuroshiro once
   let kuroshiroInstance = null;
+  let analyzerInstance = null;
 
   async function initKuroshiro() {
-    if (kuroshiroInstance) return kuroshiroInstance;
+    if (kuroshiroInstance && analyzerInstance) return { kuroshiro: kuroshiroInstance, analyzer: analyzerInstance };
     
     try {
       kuroshiroInstance = new Kuroshiro.default();
-      await kuroshiroInstance.init(new KuromojiAnalyzer({
+      analyzerInstance = new KuromojiAnalyzer({
         dictPath: chrome.runtime.getURL('lib/dict/')  // Must end with /
-      }));
+      });
+      await kuroshiroInstance.init(analyzerInstance);
       console.log('Kuroshiro initialized successfully');
-      return kuroshiroInstance;
+      return { kuroshiro: kuroshiroInstance, analyzer: analyzerInstance };
     } catch (error) {
       console.error('Failed to initialize Kuroshiro:', error);
       throw error;
     }
   }
 
-  // Romanji conversion using kuroshiro library
-  async function convertToRomaji(japaneseText) {
+  // Simple romanji conversion using Kuroshiro directly
+  async function easyConvertToRomaji(japaneseText) {
     try {
-      const kuroshiro = await initKuroshiro();
+      const { kuroshiro } = await initKuroshiro();
       
-      const romaji = await kuroshiro.convert(japaneseText, {
+      // Simple conversion using Kuroshiro's convert method
+      const romajiText = await kuroshiro.convert(japaneseText, {
         to: "romaji",
         mode: "spaced",
         romajiSystem: "hepburn"
       });
       
-      return romaji;
+      return romajiText;
+    } catch (error) {
+      console.error('Easy conversion failed:', error);
+      return japaneseText; // Fallback to original text
+    }
+  }
+
+  // Romanji conversion with proper Japanese tokenization
+  async function convertToRomaji(japaneseText) {
+    try {
+      const { kuroshiro, analyzer } = await initKuroshiro();
+
+      // Tokenize the Japanese sentence
+      const tokens = await analyzer.parse(japaneseText);
+      let result = '';
+      console.log("tokens", tokens);
+      // Process each token
+      for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        console.log("token", token);
+        // Convert token to romanji
+        const tokenRomaji = await kuroshiro.convert(token.surface_form, {
+          to: "romaji",
+          mode: "normal",
+          romajiSystem: "hepburn"
+        });
+        
+        // Display token with romanji below it
+        result += `<span class="japanese-char">${token.surface_form}<br><span class="romaji-char">${tokenRomaji}</span></span>`;
+        
+        // Add smaller space between tokens (except for the last one)
+        if (i < tokens.length - 1) {
+          result += '<span class="token-space"> </span>';
+        }
+      }
+      
+      return result;
     } catch (error) {
       console.error('Conversion failed:', error);
       return japaneseText; // Return original on error
@@ -328,37 +367,35 @@
     const subtitleText = extractSubtitleText();
     console.log('WordWatch: Subtitle text:', subtitleText);
     if (subtitleText) {
-      // Always show the original Japanese text
-      japaneseElement.textContent = subtitleText;
-      japaneseElement.style.display = 'block';
-      
       // Show romanji below if enabled
       console.log('WordWatch: Romanji enabled?', window.wordwatchRomanjiEnabled);
       if (window.wordwatchRomanjiEnabled) {
         try {
           console.log('WordWatch: Converting to romanji:', subtitleText);
-          const romanjiText = await convertToRomaji(subtitleText);
+          const romanjiText = await easyConvertToRomaji(subtitleText);
           console.log('WordWatch: Romanji result:', romanjiText);
+          console.log('WordWatch: Setting innerHTML to:', romanjiText);
           
-          // Only show romanji if it's different from the original text
-          if (subtitleText !== romanjiText) {
-            romanjiElement.textContent = romanjiText;
-            romanjiElement.style.display = 'block';
-            console.log('WordWatch: Romanji displayed:', romanjiText);
-          } else {
-            romanjiElement.textContent = '';
-            romanjiElement.style.display = 'none';
-            console.log('WordWatch: Romanji same as original, hiding');
-          }
+          // Show the character-by-character mapped text
+          japaneseElement.innerHTML = romanjiText;
+          japaneseElement.style.display = 'block';
+          
+          // Hide the separate romanji element since it's now inline
+          romanjiElement.style.display = 'none';
+          console.log('WordWatch: Character-mapped romanji displayed');
         } catch (error) {
           console.log('WordWatch: Romanji conversion failed:', error);
-          romanjiElement.textContent = '';
+          // Fallback to showing original text
+          japaneseElement.textContent = subtitleText;
+          japaneseElement.style.display = 'block';
           romanjiElement.style.display = 'none';
         }
       } else {
-        romanjiElement.textContent = '';
+        // Show original Japanese text only
+        japaneseElement.textContent = subtitleText;
+        japaneseElement.style.display = 'block';
         romanjiElement.style.display = 'none';
-        console.log('WordWatch: Romanji disabled, hiding');
+        console.log('WordWatch: Romanji disabled, showing Japanese only');
       }
     } else {
       japaneseElement.textContent = 'No subtitles detected';
