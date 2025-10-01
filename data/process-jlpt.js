@@ -31,19 +31,19 @@ vocabArray.forEach(item => {
   
   // Determine JLPT level and add to dictionary
   if (tags.includes('JLPT_N5') || tags.includes('JLPT_5')) {
-    wordEntry.level = 'n5';
+    wordEntry.level = 'N5';
     jlptWordDatabase[expression] = wordEntry;
   } else if (tags.includes('JLPT_N4') || tags.includes('JLPT_4')) {
-    wordEntry.level = 'n4';
+    wordEntry.level = 'N4';
     jlptWordDatabase[expression] = wordEntry;
   } else if (tags.includes('JLPT_N3') || tags.includes('JLPT_3')) {
-    wordEntry.level = 'n3';
+    wordEntry.level = 'N3';
     jlptWordDatabase[expression] = wordEntry;
   } else if (tags.includes('JLPT_N2') || tags.includes('JLPT_2')) {
-    wordEntry.level = 'n2';
+    wordEntry.level = 'N2';
     jlptWordDatabase[expression] = wordEntry;
   } else if (tags.includes('JLPT_N1') || tags.includes('JLPT_1')) {
-    wordEntry.level = 'n1';
+    wordEntry.level = 'N1';
     jlptWordDatabase[expression] = wordEntry;
   }
 });
@@ -51,14 +51,22 @@ vocabArray.forEach(item => {
 console.log('Processing complete. Statistics:');
 console.log(`Total words: ${Object.keys(jlptWordDatabase).length}`);
 
-// Count by level
-const levelCounts = { n5: 0, n4: 0, n3: 0, n2: 0, n1: 0 };
-Object.values(jlptWordDatabase).forEach(wordEntry => {
-  levelCounts[wordEntry.level]++;
-});
-console.log('Level distribution:', levelCounts);
 
 // Save to JSON file
-fs.writeFileSync('jlpt-word-database.json', JSON.stringify(jlptWordDatabase, null, 2));
+//fs.writeFileSync('jlpt-word-database.json', JSON.stringify(jlptWordDatabase, null, 2));
 
-console.log('Saved to jlpt-word-database.json');
+// Create JavaScript file for Chrome extension
+const jsContent = `// JLPT Word Database - Generated from jlpt-word-database.json
+const jlptWordDatabase = ${JSON.stringify(jlptWordDatabase, null, 2)};
+
+// Export for different environments
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = jlptWordDatabase;
+} else {
+  window.jlptWordDatabase = jlptWordDatabase;
+}`;
+
+fs.writeFileSync('jlpt-word-database.js', jsContent);
+
+//console.log('Saved to jlpt-word-database.json');
+console.log('Generated jlpt-word-database.js');
