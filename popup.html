@@ -143,6 +143,38 @@
     </label>
   </div>
 
+  <div class="control-group">
+    <label>Highlighting Mode:</label>
+    <div style="margin-top: 8px;">
+      <label>
+        <input type="radio" name="highlightMode" value="pos" checked> Part of Speech
+      </label>
+      <label>
+        <input type="radio" name="highlightMode" value="level"> JLPT Level
+      </label>
+    </div>
+  </div>
+
+  <div class="control-group" id="posControls">
+    <label>Part of Speech:</label>
+    <div style="margin-top: 8px;">
+      <label><input type="checkbox" name="posType" value="noun" checked> Noun</label>
+      <label><input type="checkbox" name="posType" value="verb" checked> Verb</label>
+      <label><input type="checkbox" name="posType" value="adjective" checked> Adjective</label>
+    </div>
+  </div>
+
+  <div class="control-group" id="levelControls" style="display: none;">
+    <label>JLPT Levels:</label>
+    <div style="margin-top: 8px;">
+      <label><input type="checkbox" name="jlptLevel" value="n1" checked> N1</label>
+      <label><input type="checkbox" name="jlptLevel" value="n2" checked> N2</label>
+      <label><input type="checkbox" name="jlptLevel" value="n3" checked> N3</label>
+      <label><input type="checkbox" name="jlptLevel" value="n4" checked> N4</label>
+      <label><input type="checkbox" name="jlptLevel" value="n5" checked> N5</label>
+    </div>
+  </div>
+
   <div class="preview" id="preview">
     WordWatch Preview
   </div>
